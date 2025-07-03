@@ -1,0 +1,103 @@
+settings:
+  log_level: "INFO" # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  leaf_samples_folder_path: "data/leaf_samples" # Relative path to the folder containing leaf sample data
+  results_folder_path: "reports/results/pls" # Relative path to the folder where results will be saved
+
+read_data:
+  LeafSampleReader: # LeafSampleReader is the class that reads the leaf sample data
+    read_selected_csvs: # read_selected_csvs is the method that reads the selected csv files
+      leaf_states: [dried] # Options: dred, fresh
+      seasons: [1,2,3,4] # Options: 1,2,3,4
+  DataCleaner: # DataCleaner is the class that cleans the data
+  # You can invoke drop_null_data, impute_data and remove_outliers in read_data stage and/or in TestTrainSplit stage
+  # Note that remove_outliers can only be used for training data in TestTrainSplit stage
+    drop_null_data: # drop_null_data is the method that drops null data
+        row_threshold: 0.5 # 0.5 means 50% of the data should be non-null to keep the row
+        target_col_threshold: 0.5 # 0.5 means 50% of the target column should be non-null to keep the target
+        feature_col_threshold: 0.5 # 0.5 means 50% of the feature columns should be non-null to keep the feature
+        reset_index: False # True means reset the index after dropping null data
+
+TestTrainSplit:
+  method: "stratified" # Options: stratified, season_based
+  parameters:
+    test_season: 4 # Options: 1,2,3,4 if using "season_based" method
+  train: # for training data
+    DataCleaner: 
+      impute_data: # impute_data is the method that imputes missing data
+        target_method: "knn" # Options: pearson, regression, knn
+        feature_method: "neighbour_avg" # Options: neighbour_avg
+      remove_outliers: # remove_outliers is the method that removes outliers
+        method: "both" # Options: targets, features, both, ~ (for no outlier removal)
+        feature_outlier_threshold: 95 # 95% of the data should be non-outlier to keep the feature
+        # n_estimators: 100 # Number of estimators for Isolation Forest (if using "targets" or "both" method)
+  test: # for test data
+    DataCleaner:
+      impute_data:
+        target_method: "knn"
+        feature_method: "neighbour_avg"
+      
+TargetScaler: # TargetScaler is the class that scales the target data
+  scaling_methods:
+    Al: quantile # Options: quantile, minmax, standard, log, copula, rank_minmax, ~ (for no scaling)
+    B: quantile
+    Ca: quantile
+    Cl: quantile
+    Cu: quantile
+    Fe: quantile
+    Mg: quantile
+    Mn: quantile
+    N: quantile
+    P: quantile
+    K: quantile
+    Na: quantile
+    S: quantile
+    Zn: quantile
+
+BaselineCorrector: # BaselineCorrector is the class that corrects the baseline of the data
+  method: ~ # Options: als, ica (param: n_components=5), iterative_mean (param: iterations=5), 
+  # wavelet (param: wavelet=db4, level=1), polynomial (param: poly_order=3), ~ (for no correction)
+  parameters: # below is an example for ALS baseline correction, for more details see baseline_corrector.py
+    lam: 1000
+    p: 0.1
+    niter: 5
+    als_precalculated_folder: "als_corrected_dried" # Folder in data containing pre-calculated ALS corrected data
+
+PeakFeatureExtraction: # PeakFeatureExtraction is the class that extracts peak features from the data
+# only to be used if using als baseline correction and should NOT be used with DataReducer
+  min_prominence: 0.01 # Minimum prominence of the peaks to be extracted
+  show_plot: True # Show plot of the extracted peaks
+
+DataReducer: # DataReducer is the class that reduces the data
+  method: "pca" # Options: pca, binning, ~ (for no reduction)
+  parameters:
+    reset_index: True # need to keep as True to avoid null errors at the end of the pipeline
+    n_components: 2
+    # wavelength_bins = 10 # 10nm bins if using binning
+
+RegressionModels: # RegressionModels is the class that contains the regression models
+  model_type: "MLR" # Options: LR (linear regression), MLR (univariate linear regression), PLS (partial least squares), 
+  # GPR (gaussian process regression), GPCO (gaussian process co-regression), 
+  # SVR (support vector regression), forest (random forest), catboost, MTElasticNet (multi-task elastic net),
+  # MTLasso (multi-task lasso), ~ (for no regression)
+  k_fold: 5
+  param_grid: # param_grid is the grid of parameters for the regression model, below is an example for MTLasso
+    alpha: [0.000005, 0.00001, 0.0001, 0.001, 0.01, 0.1] # Regularization parameter for Lasso and ElasticNet
+    max_iter: [10000, 50000, 100000]
+
+Evaluate:
+  metrics:  [r2, mse, rmse, rrmse, mae, mape, wrmse] # Options: r2, mse, rmse, rrmse, mae, mape, wrmse
+  weights: # Weights for the metrics only if using weighted metrics
+    Al: 0.6 # 0.6 means 60% of the weight for Al
+    B: 0.8
+    Ca: 0.6
+    Cl: 0
+    Cu: 0.6
+    Fe: 0.6
+    Mg: 0.6
+    Mn: 0.8
+    N: 1
+    P: 1
+    K: 1
+    Na: 0
+    S: 0.6
+    Zn: 0.6

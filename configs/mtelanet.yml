@@ -1,0 +1,105 @@
+settings:
+  log_level: "INFO"
+  leaf_samples_folder_path: "data/leaf_samples"
+  results_folder_path: "reports/results/mtelanet"
+
+read_data:
+  LeafSampleReader:
+    read_selected_csvs:
+      leaf_states: [fresh]
+      seasons: [1,2,3,4]
+  DataCleaner:
+  # You invoke drop_null_data, impute_data and remove_outliers in read_data stage and/or in TestTrainSplit stage
+  # Note that remove_outliers can only be used for training data in TestTrainSplit stage
+    drop_null_data:
+        row_threshold: 0.5
+        target_col_threshold: 0.5
+        feature_col_threshold: 0.5
+        reset_index: False
+
+TestTrainSplit:
+  method: "stratified"
+  train:
+    DataCleaner:
+      impute_data:
+        target_method: "knn"
+        feature_method: "neighbour_avg"
+      remove_outliers:
+        method: ~ #use ~ for exluding the method or commenting the entire method
+        feature_outlier_threshold: 95
+  test:
+    DataCleaner:
+      impute_data:
+        target_method: "knn"
+        feature_method: "neighbour_avg"
+
+TargetScaler:
+  scaling_methods:
+    Al: quantile
+    B: quantile
+    Ca: quantile
+    Cl: quantile
+    Cu: quantile
+    Fe: quantile
+    Mg: quantile
+    Mn: quantile
+    N: quantile
+    P: quantile
+    K: quantile
+    Na: quantile
+    S: quantile
+    Zn: quantile
+
+BaselineCorrector:
+  method: "als" # ["polynomial", "wavelet", "iterative_mean", "ica", "als"]
+  mean_baseline: False
+  rescale: True
+  parameters:
+    lam: 100000
+    p: 0.1
+    niter: 5
+    als_precalculated_folder: "optimised_als_corrected_samples_fresh"
+    # poly_order: 4
+    #n_components: 5
+
+PeakFeatureExtraction:
+  min_prominence: 0.01
+  show_plot: True
+
+DataReducer:
+  method: ~ # use ~ for not reducing the data
+  parameters:
+    reset_index: True # need to keep as True to avoid null errors at the end of the pipeline
+    n_components: 50
+    #wavelength_bins: 10 # if using binning
+
+RegressionModels:
+  model_type: "MTElasticNet" # ['MLR', 'PLS', 'GPR', 'GPCO', 'SVR', 'MTElasticNet', 'MTLasso', 'GradientBoost']
+  k_fold: 10
+  param_grid:
+#    n_components: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39]
+#    scale: [True, False]
+#    max_iter: [500, 1000]
+#    tol: [0.000001, 0.00001]
+#    copy: [True, False]
+    alpha: [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10, 100]
+    l1_ratio: [0, 0.1, 0.2, 0.4, 0.6, 0.8, 1]
+    max_iter: [10000]
+
+Evaluate:
+  metrics:  [r2, mse, rmse, rrmse, mae, mape, wrmse]
+  weights:
+    Al: 0.6
+    B: 0.8
+    Ca: 0.6
+    Cl: 0
+    Cu: 0.6
+    Fe: 0.6
+    Mg: 0.6
+    Mn: 0.8
+    N: 1
+    P: 1
+    K: 1
+    Na: 0
+    S: 0.6
+    Zn: 0.6
