@@ -1,10 +1,6 @@
-# :rocket: Group Repository for the Data Science Mini-Project (EMATM0050)
+# :rocket: Multiple nutrient sensing for smart agriculture
 
-Group Number: O2
-
-Problem Assigned: Dalhousie - Multiple nutrient sensing for smart agriculture
-
-Group Members: John White, Thomas Wilson, Raj Dhakan, Ross Duncan
+Contributors: John White, Thomas Wilson, Raj Dhakan, Ross Duncan
 
 ## :page_facing_up: Introduction
 
