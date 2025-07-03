@@ -24,6 +24,8 @@ Reflectance is measured over a spectrum of wavelengths between 400nm–2500nm at
 | **PPM** | -                      | Al, B, Cu, Fe, Mn, Zn |
 | **PCT** | Ca, Mg, N, P, K, S     | Cl, Na                |
 
+*Dataset owners Abukmeil et al.[^3].
+
 ## :open_file_folder: Project Structure
 ```
 dsmp-2024-groupo2/
